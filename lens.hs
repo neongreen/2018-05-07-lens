@@ -1,7 +1,9 @@
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 import BasePrelude
+import Data.Functor.Identity
 
 -- Sample data types
 
@@ -24,37 +26,46 @@ artyom = Person "Artyom" 22 (Address "Berlin" "Germany")
 
 -- First-class fields
 
-data Field r a = Field {
-  get :: r -> a,
-  modify :: (a -> a) -> r -> r }
+data Field a r = Field {
+  modifyF :: forall f. Functor f => (a -> f a) -> r -> f r }
+
+modify :: Field a r -> (a -> a) -> r -> r
+modify ra f r =
+  runIdentity $ (modifyF ra) (Identity . f) r
+
+get :: Field a r -> r -> a
+get ra = fst . (modifyF ra) (\a -> (a, a))
 
 -- Definitions of 'Field's for all fields
 
-namefield :: Field Person String
+
+{-
+
+namefield :: Field String Person
 namefield = Field {
   get = \person -> name person,
   modify = \f person -> person {name = f (name person)}
   }
 
-agefield :: Field Person Int
+agefield :: Field Int Person 
 agefield = Field {
   get = \person -> age person,
   modify = \f person -> person { age = f (age person) }
   }
 
-addressfield :: Field Person Address
+addressfield :: Field Address Person
 addressfield = Field {
   get = \person -> address person,
   modify = \f person -> person { address = f (address person) }
   }
 
-cityfield :: Field Address String
+cityfield :: Field String Address
 cityfield = Field {
   get = \address -> city address,
   modify = \f address -> address { city = f (city address) }
   }
 
-countryfield :: Field Address String
+countryfield :: Field String Address
 countryfield = Field {
   get = \address -> country address,
   modify = \f address -> address { country = f (country address) }
@@ -62,16 +73,16 @@ countryfield = Field {
 
 -- Helpers
   
-increment :: Num a => Field r a -> r -> r
+increment :: Num a => Field a r -> r -> r
 increment = (+= 1)
 
-(+=) :: Num a => Field r a -> a -> (r -> r)
+(+=) :: Num a => Field a r -> a -> (r -> r)
 (+=) field n = (modify field) (+n)
 
-(%=) :: Field r a -> (a -> a) -> (r -> r)
+(%=) :: Field a r -> (a -> a) -> (r -> r)
 (%=) = modify
 
-(.=) :: Field r a -> a -> (r -> r)
+(.=) :: Field a r -> a -> (r -> r)
 (.=) field = modify field . const
 
 infix 5 +=, %=, .=
@@ -81,7 +92,7 @@ infix 5 +=, %=, .=
 oldArtyom = artyom
   & agefield += 3
   & namefield %= map toLower
-  & cityfield.addressfield .= "Heidelberg"
+  & addressfield.cityfield .= "Heidelberg"
 
 -- Category instance
 
@@ -92,7 +103,9 @@ instance Category Field where
     modify = ($) }
 
   (.) :: Field b c -> Field a b -> Field a c
-  (.) bc ab = Field {
-    get = get bc . get ab,
-    modify = modify ab . modify bc
+  (.) cb ba = Field {
+    get = get ba . get cb,
+    modify = modify cb . modify ba
   }
+
+-}

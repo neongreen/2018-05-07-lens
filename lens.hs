@@ -1,6 +1,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 import BasePrelude
 import Data.Functor.Identity
@@ -29,12 +30,26 @@ artyom = Person "Artyom" 22 (Address "Berlin" "Germany")
 data Field a r = Field {
   modifyF :: forall f. Functor f => (a -> f a) -> r -> f r }
 
-modify :: Field a r -> (a -> a) -> r -> r
-modify ra f r =
-  runIdentity $ (modifyF ra) (Identity . f) r
+modify :: forall a r. Field a r -> (a -> a) -> r -> r
+modify ra f r = runIdentity $ r_func r
 
-get :: Field a r -> r -> a
-get ra = fst . (modifyF ra) (\a -> (a, a))
+  where
+    -- We give this to 'modifyF'
+    f' :: a -> Identity a
+    f' = Identity . f
+
+    -- This is the result of 'modifyF'
+    r_func :: r -> Identity r
+    r_func = (modifyF ra) f'
+
+get :: forall a r. Field a r -> r -> a
+get ra r = fst $ r_func r
+  where
+    f' :: a -> (,) a a
+    f' a = (a, a)
+
+    r_func :: r -> (,) a r
+    r_func = (modifyF ra) f'
 
 -- Definitions of 'Field's for all fields
 

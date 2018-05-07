@@ -74,12 +74,14 @@ increment = (+= 1)
 (.=) :: Field r a -> a -> (r -> r)
 (.=) field = modify field . const
 
+infix 5 +=, %=, .=
+
 -- Example of modification
 
 oldArtyom = artyom
   & agefield += 3
   & namefield %= map toLower
---  & addressfield.cityaddress .= "Heidelberg"
+  & cityfield.addressfield .= "Heidelberg"
 
 -- Category instance
 

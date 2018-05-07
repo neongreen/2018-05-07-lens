@@ -53,37 +53,22 @@ get ra r = fst $ r_func r
 
 -- Definitions of 'Field's for all fields
 
-
-{-
-
 namefield :: Field String Person
 namefield = Field {
-  get = \person -> name person,
-  modify = \f person -> person {name = f (name person)}
-  }
-
-agefield :: Field Int Person 
-agefield = Field {
-  get = \person -> age person,
-  modify = \f person -> person { age = f (age person) }
+  modifyF = \f person ->
+      (\l -> person {name = l}) <$> f (name person)
   }
 
 addressfield :: Field Address Person
 addressfield = Field {
-  get = \person -> address person,
-  modify = \f person -> person { address = f (address person) }
+  modifyF = \f person ->
+      (\l -> person {address = l}) <$> f (address person)
   }
 
 cityfield :: Field String Address
 cityfield = Field {
-  get = \address -> city address,
-  modify = \f address -> address { city = f (city address) }
-  }
-
-countryfield :: Field String Address
-countryfield = Field {
-  get = \address -> country address,
-  modify = \f address -> address { country = f (country address) }
+  modifyF = \f address ->
+      (\l -> address {city = l}) <$> f (city address)
   }
 
 -- Helpers
@@ -101,6 +86,9 @@ increment = (+= 1)
 (.=) field = modify field . const
 
 infix 5 +=, %=, .=
+
+
+  {-
 
 -- Example of modification
 

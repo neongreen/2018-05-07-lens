@@ -81,28 +81,8 @@ increment = (+= 1)
 
 infix 5 +=, %=, .=
 
-
-  {-
-
 -- Example of modification
 
 oldArtyom = artyom
-  & agefield += 3
   & namefield %= map toLower
   & addressfield.cityfield .= "Heidelberg"
-
--- Category instance
-
-instance Category Field where
-  id :: Field a a
-  id = Field {
-    get = id,
-    modify = ($) }
-
-  (.) :: Field b c -> Field a b -> Field a c
-  (.) cb ba = Field {
-    get = get ba . get cb,
-    modify = modify cb . modify ba
-  }
-
--}

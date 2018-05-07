@@ -81,7 +81,7 @@ oldArtyom = artyom
   & namefield %= map toLower
 --  & addressfield.cityaddress .= "Heidelberg"
 
--- Unfinished Category instance
+-- Category instance
 
 instance Category Field where
   id :: Field a a
@@ -92,4 +92,5 @@ instance Category Field where
   (.) :: Field b c -> Field a b -> Field a c
   (.) bc ab = Field {
     get = get bc . get ab,
-    modify a = modify 
+    modify = modify ab . modify bc
+  }

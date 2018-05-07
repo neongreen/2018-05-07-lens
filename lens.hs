@@ -27,8 +27,8 @@ artyom = Person "Artyom" 22 (Address "Berlin" "Germany")
 
 -- First-class fields
 
-data Field a r = Field {
-  modifyF :: forall f. Functor f => (a -> f a) -> r -> f r }
+type Field a r =
+  forall f. Functor f => (a -> f a) -> r -> f r
 
 modify :: forall a r. Field a r -> (a -> a) -> r -> r
 modify ra f r = runIdentity $ r_func r
@@ -40,7 +40,7 @@ modify ra f r = runIdentity $ r_func r
 
     -- This is the result of 'modifyF'
     r_func :: r -> Identity r
-    r_func = (modifyF ra) f'
+    r_func = ra f'
 
 get :: forall a r. Field a r -> r -> a
 get ra r = fst $ r_func r
@@ -49,27 +49,21 @@ get ra r = fst $ r_func r
     f' a = (a, a)
 
     r_func :: r -> (,) a r
-    r_func = (modifyF ra) f'
+    r_func = ra f'
 
 -- Definitions of 'Field's for all fields
 
 namefield :: Field String Person
-namefield = Field {
-  modifyF = \f person ->
+namefield = \f person ->
       (\l -> person {name = l}) <$> f (name person)
-  }
 
 addressfield :: Field Address Person
-addressfield = Field {
-  modifyF = \f person ->
+addressfield = \f person ->
       (\l -> person {address = l}) <$> f (address person)
-  }
 
 cityfield :: Field String Address
-cityfield = Field {
-  modifyF = \f address ->
+cityfield = \f address ->
       (\l -> address {city = l}) <$> f (city address)
-  }
 
 -- Helpers
   
